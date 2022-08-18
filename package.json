@@ -1,0 +1,23 @@
+{
+  "type": "module",
+  "name": "via-mora",
+  "version": "1.0.0",
+  "engines": {
+    "node": "18.x"
+  },
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "init-db": "node scripts/init_db.js",
+    "fetch-train-status": "node scripts/fetch_train_status.js",
+    "test": "find . -name \\*.test.js -exec node {} \\;"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-html-parser": "^5.4.2-0",
+    "sqlite": "^4.1.2",
+    "sqlite3": "^5.0.11"
+  }
+}
