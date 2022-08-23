@@ -21,6 +21,7 @@ import { parseStatusPage } from "./parse.js";
 
     const actual = parseStatusPage(html)
     const expected = ([
+        { stationName: 'OTTAWA' },
         { stationName: 'FALLOWFIELD RAIL STATION', expectedArrival: '12:02', actualArrival: '12:03' },
         { stationName: 'SMITHS FALLS', expectedArrival: '12:34', actualArrival: '12:39' },
         { stationName: 'BROCKVILLE', expectedArrival: '13:09', actualArrival: '13:24' },

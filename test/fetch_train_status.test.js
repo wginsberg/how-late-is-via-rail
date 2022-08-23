@@ -1,8 +1,7 @@
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import { rm } from 'fs/promises';
-import sqlite3 from 'sqlite3'
-import { open } from 'sqlite'
+import Database from 'better-sqlite3'
 
 import { fetchTrainData } from '../util/fetch_train_status.js';
 
@@ -21,11 +20,13 @@ await execPromise(`npm run init-db ${DB_NAME}`)
 
 /* Fetch data for single train */
 
-const db = await open({ filename: DB_NAME, driver: sqlite3.Database })
+const db = new Database(DB_NAME)
 
 await fetchTrainData(db)
+await fetchTrainData(db, 53, '2022-08-22')
+await fetchTrainData(db, 53, '2022-08-21')
 
-await db.close()
+db.close()
 
 /* Check that database contains the new data */
 
