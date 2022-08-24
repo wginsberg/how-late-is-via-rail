@@ -1,0 +1,82 @@
+<html>
+    <head>
+        <title>Viarail App</title>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- <link rel="stylesheet" href="index.css"> -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.7.0/sql-wasm.js" integrity="sha512-vHGg41kMMVrI90EIvUSlrqyE0AOAzHJOxWSMZrv0FkSCLrRsXxfmDrSM/7ms3jINzUROn5OWAlWp+xx0tVdakw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    </head>
+    <body>
+        <label>
+            <span>Arrival Station</span>
+            <select id="arrivalStation"></select>
+        </label>
+        <table id="results">
+            <thead>
+                <tr>
+                    <td>Expected</td>
+                    <td>Actual</td>
+                    <td>Train Number</td>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <script type="module">
+            /* Load database */
+
+            const sqlPromise = initSqlJs({
+                locateFile: file => `https://sql.js.org/dist/${file}`
+            });
+            const dataPromise = fetch("test.db").then(res => res.arrayBuffer());
+            const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
+            const db = new SQL.Database(new Uint8Array(buf));
+
+            /* Add options to select input */
+
+            const stationResults = db.exec("SELECT station_id, station_name FROM station")
+            const stations = stationResults[0].values
+            const stationOptions = [["*", "any"], ...stations]
+
+            const select = document.getElementById("arrivalStation")
+            stationOptions.forEach(([stationId, stationName], i) => {
+                select[i] = new Option(stationName, stationId)
+            })
+
+            /* Add event listener to select input */
+
+            const selectByStationId = db.prepare("SELECT scheduled_time, actual_time, train_number FROM arrival WHERE station_id = ?")
+            const selectByWildcard = db.prepare("SELECT scheduled_time, actual_time, train_number FROM arrival")
+
+            function handeStationIdChange (stationId) {
+                // Reset table
+                const tableBody = document.querySelector("#results > tbody")
+                const tableRows = tableBody.children || []
+                for (let i = 0; i < tableRows.length; i++) {
+                    tableBody.removeChild(tableRows[i])
+                }
+                
+                // Query database
+                let stmt
+                if (stationId === "*") stmt = selectByWildcard
+                else { stmt = selectByStationId; stmt.bind([stationId]) }
+
+                // Add results to table
+                while (stmt.step()) {
+                    const tableRow = document.createElement("tr")
+                    tableBody.appendChild(tableRow)
+                    stmt.get().forEach(value => {
+                        const tableData = document.createElement("td")
+                        tableData.innerText = value
+                        tableRow.appendChild(tableData)
+                    })
+                }
+            }
+
+            select.addEventListener('change', e => handeStationIdChange(e.target.value))
+
+            /* Add initial data to table */
+
+            handeStationIdChange("*")
+        </script>
+    </body>
+</html>
