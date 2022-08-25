@@ -1,4 +1,5 @@
 import { parseStatusPage } from "./parse.js"
+import { parseTime } from "./datetime.js"
 
 const DATE_YESTERDAY = new Date(new Date() - 86400000).toISOString().slice(0, 10)
 const BASE_URL = "https://reservia.viarail.ca/tsi/GetTrainStatus.aspx"
@@ -15,6 +16,11 @@ export async function fetchTrainData(db, trainNumber=53, arrivalDate=DATE_YESTER
          })
 
     const [origin, ...stations] = parseStatusPage(statusPage)
+         .map(({ expectedArrival, actualArrival, ...station }) => ({
+            expectedArrival: parseTime(expectedArrival),
+            actualArrival: parseTime(actualArrival),
+            ...station
+        }))
 
     if (!origin) {
         console.warn("No arrivals\n")

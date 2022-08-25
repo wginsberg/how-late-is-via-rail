@@ -21,8 +21,8 @@ db.exec(`
         station_id INTEGER NOT NULL,
         origin_id INTEGER NOT NULL,
         date TEXT NOT NULL,
-        scheduled_time TEXT NOT NULL,
-        actual_time TEXT NOT NULL,
+        scheduled_time INTEGER NOT NULL,
+        actual_time INTEGER NOT NULL,
         FOREIGN KEY (station_id) REFERENCES station (station_id),
         FOREIGN KEY (origin_id) REFERENCES station (station_id),
         UNIQUE (train_number, station_id, date)
