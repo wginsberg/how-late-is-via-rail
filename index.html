@@ -5,11 +5,20 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <!-- <link rel="stylesheet" href="index.css"> -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.7.0/sql-wasm.js" integrity="sha512-vHGg41kMMVrI90EIvUSlrqyE0AOAzHJOxWSMZrv0FkSCLrRsXxfmDrSM/7ms3jINzUROn5OWAlWp+xx0tVdakw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="util.js"></script>
     </head>
     <body>
         <label>
             <span>Arrival Station</span>
             <select id="arrivalStation"></select>
+        </label>
+        <label>
+            <span>Origin Station</span>
+            <select id="originStation"></select>
+        </label>
+        <label>
+            <span>Train Number</span>
+            <select id="trainNumber"></select>
         </label>
         <table id="results">
             <thead>
@@ -27,19 +36,41 @@
             const sqlPromise = initSqlJs({
                 locateFile: file => `https://sql.js.org/dist/${file}`
             });
-            const dataPromise = fetch("test.db").then(res => res.arrayBuffer());
+            const dataPromise = fetch("mora.db").then(res => res.arrayBuffer());
             const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
             const db = new SQL.Database(new Uint8Array(buf));
 
-            /* Add options to select input */
+            /* Add options to arrival input */
 
             const stationResults = db.exec("SELECT station_id, station_name FROM station")
             const stations = stationResults[0].values
             const stationOptions = [["*", "any"], ...stations]
 
-            const select = document.getElementById("arrivalStation")
+            const arrivalSelect = document.getElementById("arrivalStation")
             stationOptions.forEach(([stationId, stationName], i) => {
-                select[i] = new Option(stationName, stationId)
+                arrivalSelect[i] = new Option(stationName, stationId)
+            })
+
+            /* Add options to origin input */
+
+            const originResults = db.exec("SELECT DISTINCT station.station_id, station_name FROM station JOIN arrival ON origin_id = station.station_id")
+            const origins = originResults[0].values
+            const originnOptions = [["*", "any"], ...origins]
+
+            const originSelect = document.getElementById("originStation")
+            originnOptions.forEach(([stationId, stationName], i) => {
+                originSelect[i] = new Option(stationName, stationId)
+            })
+
+            /* Add options to train number input */
+
+            const trainNumberResults = db.exec("SELECT DISTINCT train_number FROM arrival")
+            const trainNumbers = trainNumberResults[0].values
+            const trainNumberOptions = [["*", "any"], ...trainNumbers]
+
+            const trainNumberSelect = document.getElementById("trainNumber")
+            trainNumberOptions.forEach(([trainNumber, trainNumberName], i) => {
+                trainNumberSelect[i] = new Option(trainNumberName || trainNumber, trainNumber)
             })
 
             /* Add event listener to select input */
@@ -72,7 +103,7 @@
                 }
             }
 
-            select.addEventListener('change', e => handeStationIdChange(e.target.value))
+            arrivalSelect.addEventListener('change', e => handeStationIdChange(e.target.value))
 
             /* Add initial data to table */
 

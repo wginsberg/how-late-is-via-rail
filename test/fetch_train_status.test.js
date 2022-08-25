@@ -23,8 +23,6 @@ await execPromise(`npm run init-db ${DB_NAME}`)
 const db = new Database(DB_NAME)
 
 await fetchTrainData(db)
-await fetchTrainData(db, 53, '2022-08-22')
-await fetchTrainData(db, 53, '2022-08-21')
 
 db.close()
 
