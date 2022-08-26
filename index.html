@@ -5,31 +5,22 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <!-- <link rel="stylesheet" href="index.css"> -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.7.0/sql-wasm.js" integrity="sha512-vHGg41kMMVrI90EIvUSlrqyE0AOAzHJOxWSMZrv0FkSCLrRsXxfmDrSM/7ms3jINzUROn5OWAlWp+xx0tVdakw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-        <script src="util.js"></script>
     </head>
     <body>
-        <label>
-            <span>Arrival Station</span>
-            <select id="arrivalStation"></select>
-        </label>
-        <label>
-            <span>Origin Station</span>
-            <select id="originStation"></select>
-        </label>
-        <label>
-            <span>Train Number</span>
-            <select id="trainNumber"></select>
-        </label>
-        <table id="results">
-            <thead>
-                <tr>
-                    <td>Expected</td>
-                    <td>Actual</td>
-                    <td>Train Number</td>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <form id="criteria">
+            <label>
+                <span>Arrival Station</span>
+                <select id="arrivalStation"></select>
+            </label>
+            <label>
+                <span>Origin Station</span>
+                <select id="originStation"></select>
+            </label>
+            <label>
+                <span>Train Number</span>
+                <select id="trainNumber"></select>
+            </label>
+        </form>
         <script type="module">
             /* Load database */
 
@@ -55,10 +46,10 @@
 
             const originResults = db.exec("SELECT DISTINCT station.station_id, station_name FROM station JOIN arrival ON origin_id = station.station_id")
             const origins = originResults[0].values
-            const originnOptions = [["*", "any"], ...origins]
+            const originOptions = [["*", "any"], ...origins]
 
             const originSelect = document.getElementById("originStation")
-            originnOptions.forEach(([stationId, stationName], i) => {
+            originOptions.forEach(([stationId, stationName], i) => {
                 originSelect[i] = new Option(stationName, stationId)
             })
 
@@ -73,41 +64,123 @@
                 trainNumberSelect[i] = new Option(trainNumberName || trainNumber, trainNumber)
             })
 
-            /* Add event listener to select input */
+            /* Add event listener to form */
 
-            const selectByStationId = db.prepare("SELECT scheduled_time, actual_time, train_number FROM arrival WHERE station_id = ?")
-            const selectByWildcard = db.prepare("SELECT scheduled_time, actual_time, train_number FROM arrival")
+            function handleInputChange() {
+                const arrivalStation = document.getElementById("arrivalStation").value
+                const originStation = document.getElementById("originStation").value
+                const trainNumber = document.getElementById("trainNumber").value
 
-            function handeStationIdChange (stationId) {
-                // Reset table
-                const tableBody = document.querySelector("#results > tbody")
-                const tableRows = tableBody.children || []
-                for (let i = 0; i < tableRows.length; i++) {
-                    tableBody.removeChild(tableRows[i])
+                displayStats(arrivalStation, originStation, trainNumber)
+                updateOptions(arrivalStation, originStation, trainNumber)
+            }
+
+            function updateOptions (arrivalStation, originStation, trainNumber) {
+                if (arrivalStation === "*") {
+                    // enable all options
+                    const originSelect = document.getElementById("originStation")
+                    originSelect.childNodes.forEach((option) => {
+                        option.disabled = false
+                    })
+                    const trainSelect = document.getElementById("trainNumber")
+                    trainSelect.childNodes.forEach((option) => {
+                        option.disabled = false
+                    })
+                    return
+                }
+
+                // Restrict origin station options for this arrival station
+                const originResults = db.exec(`
+                    SELECT DISTINCT origin_id
+                    FROM arrival
+                    WHERE station_id = ${arrivalStation}
+                `)
+                const origins = originResults[0].values.map(([value]) => value)
+                const originOptions = new Set(["*", ...origins])
+
+                const originSelect = document.getElementById("originStation")
+                originSelect.childNodes.forEach((option) => {
+                    option.disabled = !originOptions.has(Number(option.value))
+                })
+
+                // Reset origin if current option is now disabled
+                if (originSelect.selectedOptions[0].disabled) {
+                    originSelect.value = "*"
                 }
                 
-                // Query database
-                let stmt
-                if (stationId === "*") stmt = selectByWildcard
-                else { stmt = selectByStationId; stmt.bind([stationId]) }
+                // Restrict train number options for this arrival and origin station
+                const originFilter = originStation === "*"
+                    ? `true`
+                    : `origin_id = ${originStation}`
 
-                // Add results to table
-                while (stmt.step()) {
-                    const tableRow = document.createElement("tr")
-                    tableBody.appendChild(tableRow)
-                    stmt.get().forEach(value => {
-                        const tableData = document.createElement("td")
-                        tableData.innerText = value
-                        tableRow.appendChild(tableData)
-                    })
+                const trainNumberResults = db.exec(`
+                    SELECT DISTINCT train_number
+                    FROM arrival
+                    WHERE station_id = ${arrivalStation}
+                        AND ${originFilter}
+                `)
+
+                const trainNumbers = trainNumberResults[0].values.map(([value]) => value)
+                const trainNumberOptions = new Set(["*", ...trainNumbers])
+
+                const trainNumberSelect = document.getElementById("trainNumber")
+                trainNumberSelect.childNodes.forEach((option) => {
+                    option.disabled = !trainNumberOptions.has(Number(option.value))
+                })
+                // Reset train number if current option is now disabled
+                if (trainNumberSelect.selectedOptions[0].disabled) {
+                    trainNumberSelect.value = "*"
                 }
             }
 
-            arrivalSelect.addEventListener('change', e => handeStationIdChange(e.target.value))
+            function displayStats (arrivalStation = "*", originStation = "*", trainNumber = "*") {
 
-            /* Add initial data to table */
+                const stationFilter = arrivalStation === "*"
+                    ? `true`
+                    : `station_id = ${arrivalStation}`
+                const originFilter = originStation === "*"
+                    ? `true`
+                    : `origin_id = ${originStation}`
+                const trainFilter = trainNumber === "*"
+                    ? `true`
+                    : `train_number = ${trainNumber}`
 
-            handeStationIdChange("*")
+                const filters = [stationFilter, originFilter, trainFilter].join(" AND ")
+
+                const queries = {
+                    plus15: `SELECT count(*) FROM arrival WHERE (actual_time - scheduled_time) > 15 AND ${filters}`,
+                    plus60: `SELECT count(*) FROM arrival WHERE (actual_time - scheduled_time) > 60 AND ${filters}`,
+                    total: `SELECT count(*) AS total FROM arrival WHERE ${filters}`,
+                    dateRange: `SELECT max(date), min(date) FROM arrival WHERE ${filters}`
+                }
+
+                const results = {}
+
+                for (const query in queries) {
+                    const [{ values }] = db.exec(queries[query])
+                    const [result] = values
+                    results[query] = result
+                }
+
+                const { plus15, plus60, total, dateRange } = results
+
+                const message = `
+                    Since ${dateRange[0]}<br>
+                    trains arrived <strong>15 minutes late</strong> ${plus15} times;<br>
+                    trains arrived <strong>more than 1 hour late</strong> ${plus60} times;<br>
+                    (out of ${total} total trains)
+                `
+
+                const el = document.createElement("div")
+                el.innerHTML = message
+                document.body.appendChild(el)
+            }
+
+            document.getElementById("criteria").addEventListener('change', e => handleInputChange())
+
+            /* Add initial data to page */
+
+            displayStats()
         </script>
     </body>
 </html>
