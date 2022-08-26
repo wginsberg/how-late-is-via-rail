@@ -19,6 +19,10 @@ export function parseStatusPage(text = '') {
             return { stationName, expectedArrival, actualArrival }
         })
         .filter(({ stationName }) => stationName)
+        .filter(({ actualArrival }, i) => {
+            if(i === 0) return true             // always include origin station
+            if(!!actualArrival) return true     // filter out missing data
+        })
 
     return results
 }

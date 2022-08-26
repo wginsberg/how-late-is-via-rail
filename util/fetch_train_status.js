@@ -22,7 +22,7 @@ export async function fetchTrainData(db, trainNumber=53, arrivalDate=DATE_YESTER
             ...station
         }))
 
-    if (!origin) {
+    if (!origin || stations.length === 0) {
         console.warn("No arrivals\n")
         return
     }
