@@ -2,7 +2,7 @@ import { promisify } from 'util';
 import { exec } from 'child_process';
 import { rm } from 'fs/promises';
 import Database from 'better-sqlite3'
-
+import assert from 'assert';
 import { fetchTrainData } from '../util/fetch_train_status.js';
 
 const DB_NAME = "test.db"
@@ -24,10 +24,11 @@ const db = new Database(DB_NAME)
 
 await fetchTrainData(db)
 
-db.close()
-
 /* Check that database contains the new data */
 
-console.warn("Unfinished test implementation")
+const rows = db.prepare("SELECT * FROM arrival").all()
+db.close()
 
-/* Check that generated HTML contains the new data */
+// const [{ count }] = results
+console.log(rows)
+assert(rows.length > 1, 'There should be more than 1 row in the "arrivals" table')
