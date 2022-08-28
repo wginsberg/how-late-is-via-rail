@@ -4,7 +4,6 @@
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <!-- <link rel="stylesheet" href="index.css"> -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.7.0/sql-wasm.js" integrity="sha512-vHGg41kMMVrI90EIvUSlrqyE0AOAzHJOxWSMZrv0FkSCLrRsXxfmDrSM/7ms3jINzUROn5OWAlWp+xx0tVdakw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <style>
             body {
                 margin: auto;
@@ -33,20 +32,55 @@
             </label>
         </form>
         <script type="module">
-            /* Load database */
+            /* Load data */
 
-            const sqlPromise = initSqlJs({
-                locateFile: file => `https://sql.js.org/dist/${file}`
-            });
-            const dataPromise = fetch("mora.db").then(res => res.arrayBuffer());
-            const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
-            const db = new SQL.Database(new Uint8Array(buf));
+            const rawData = await fetch("data.csv")
+                .then(res => {
+                    if (res.status !== 200) console.error(res.body)
+                    return res.text() || ""
+                })
+            const rows = rawData.split("\n").slice(1)
+
+            const stations = {}
+            const origins = {}
+            const trainNumbers = new Set()
+            const arrivals = []
+            for (const row of rows) {
+                if (!row) continue
+                const [trainNumber, stationName, originName, date, expected, actual] = row.split(",")
+
+                if (!stations[stationName]) {
+                    const nextId = `${Object.keys(stations).length + 1}`
+                    stations[stationName] = nextId
+                }
+
+                const stationId = stations[stationName]
+
+                if (!origins[originName]) {
+                    const nextId = `${Object.keys(origins).length + 1}`
+                    origins[originName] = nextId
+                }
+
+                const originId = origins[originName]
+
+                const arrival = {
+                    trainNumber,
+                    stationId,
+                    originId,
+                    date,
+                    expected: Number(expected),
+                    actual: Number(actual)
+                }
+                arrivals.push(arrival)
+                trainNumbers.add(Number(trainNumber))
+            }
 
             /* Add options to arrival input */
 
-            const stationResults = db.exec("SELECT station_id, station_name FROM station")
-            const stations = stationResults[0].values
-            const stationOptions = [["*", "any"], ...stations]
+            const stationOptions = [
+                ["*", "any"], 
+                ...Object.entries(stations).map(([name, id]) => ([id, name]))
+            ]
 
             const arrivalSelect = document.getElementById("arrivalStation")
             stationOptions.forEach(([stationId, stationName], i) => {
@@ -55,9 +89,10 @@
 
             /* Add options to origin input */
 
-            const originResults = db.exec("SELECT DISTINCT station.station_id, station_name FROM station JOIN arrival ON origin_id = station.station_id")
-            const origins = originResults[0].values
-            const originOptions = [["*", "any"], ...origins]
+            const originOptions = [
+                ["*", "any"],
+                ...Object.entries(origins).map(([name, id]) => ([id, name]))
+            ]
 
             const originSelect = document.getElementById("originStation")
             originOptions.forEach(([stationId, stationName], i) => {
@@ -66,9 +101,10 @@
 
             /* Add options to train number input */
 
-            const trainNumberResults = db.exec("SELECT DISTINCT train_number FROM arrival")
-            const trainNumbers = trainNumberResults[0].values
-            const trainNumberOptions = [["*", "any"], ...trainNumbers]
+            const trainNumberOptions = [
+                ["*", "any"],
+                ...[...trainNumbers].sort().map(trainNumber => ([ trainNumber, trainNumber ]))
+            ]
 
             const trainNumberSelect = document.getElementById("trainNumber")
             trainNumberOptions.forEach(([trainNumber, trainNumberName], i) => {
@@ -83,100 +119,88 @@
                 const trainNumber = document.getElementById("trainNumber").value
 
                 displayStats(arrivalStation, originStation, trainNumber)
-                updateOptions(arrivalStation, originStation, trainNumber)
+                // updateOptions(arrivalStation, originStation, trainNumber)
             }
 
-            function updateOptions (arrivalStation, originStation, trainNumber) {
-                if (arrivalStation === "*") {
-                    // enable all options
-                    const originSelect = document.getElementById("originStation")
-                    originSelect.childNodes.forEach((option) => {
-                        option.disabled = false
-                    })
-                    const trainSelect = document.getElementById("trainNumber")
-                    trainSelect.childNodes.forEach((option) => {
-                        option.disabled = false
-                    })
-                    return
-                }
+            // function updateOptions (arrivalStation, originStation, trainNumber) {
+            //     if (arrivalStation === "*") {
+            //         // enable all options
+            //         const originSelect = document.getElementById("originStation")
+            //         originSelect.childNodes.forEach((option) => {
+            //             option.disabled = false
+            //         })
+            //         const trainSelect = document.getElementById("trainNumber")
+            //         trainSelect.childNodes.forEach((option) => {
+            //             option.disabled = false
+            //         })
+            //         return
+            //     }
 
-                // Restrict origin station options for this arrival station
-                const originResults = db.exec(`
-                    SELECT DISTINCT origin_id
-                    FROM arrival
-                    WHERE station_id = ${arrivalStation}
-                `)
-                const origins = originResults[0].values.map(([value]) => value)
-                const originOptions = new Set(["*", ...origins])
+            //     // Restrict origin station options for this arrival station
+            //     const originResults = db.exec(`
+            //         SELECT DISTINCT origin_id
+            //         FROM arrival
+            //         WHERE station_id = ${arrivalStation}
+            //     `)
+            //     const origins = originResults[0].values.map(([value]) => value)
+            //     const originOptions = new Set(["*", ...origins])
 
-                const originSelect = document.getElementById("originStation")
-                originSelect.childNodes.forEach((option) => {
-                    option.disabled = !originOptions.has(Number(option.value))
-                })
+            //     const originSelect = document.getElementById("originStation")
+            //     originSelect.childNodes.forEach((option) => {
+            //         option.disabled = !originOptions.has(Number(option.value))
+            //     })
 
-                // Reset origin if current option is now disabled
-                if (originSelect.selectedOptions[0].disabled) {
-                    originSelect.value = "*"
-                }
+            //     // Reset origin if current option is now disabled
+            //     if (originSelect.selectedOptions[0].disabled) {
+            //         originSelect.value = "*"
+            //     }
                 
-                // Restrict train number options for this arrival and origin station
-                const originFilter = originStation === "*"
-                    ? `true`
-                    : `origin_id = ${originStation}`
+            //     // Restrict train number options for this arrival and origin station
+            //     const originFilter = originStation === "*"
+            //         ? `true`
+            //         : `origin_id = ${originStation}`
 
-                const trainNumberResults = db.exec(`
-                    SELECT DISTINCT train_number
-                    FROM arrival
-                    WHERE station_id = ${arrivalStation}
-                        AND ${originFilter}
-                `)
+            //     const trainNumberResults = db.exec(`
+            //         SELECT DISTINCT train_number
+            //         FROM arrival
+            //         WHERE station_id = ${arrivalStation}
+            //             AND ${originFilter}
+            //     `)
 
-                const trainNumbers = trainNumberResults[0].values.map(([value]) => value)
-                const trainNumberOptions = new Set(["*", ...trainNumbers])
+            //     const trainNumbers = trainNumberResults[0].values.map(([value]) => value)
+            //     const trainNumberOptions = new Set(["*", ...trainNumbers])
 
-                const trainNumberSelect = document.getElementById("trainNumber")
-                trainNumberSelect.childNodes.forEach((option) => {
-                    option.disabled = !trainNumberOptions.has(Number(option.value))
-                })
-                // Reset train number if current option is now disabled
-                if (trainNumberSelect.selectedOptions[0].disabled) {
-                    trainNumberSelect.value = "*"
-                }
-            }
+            //     const trainNumberSelect = document.getElementById("trainNumber")
+            //     trainNumberSelect.childNodes.forEach((option) => {
+            //         option.disabled = !trainNumberOptions.has(Number(option.value))
+            //     })
+            //     // Reset train number if current option is now disabled
+            //     if (trainNumberSelect.selectedOptions[0].disabled) {
+            //         trainNumberSelect.value = "*"
+            //     }
+            // }
 
             function displayStats (arrivalStation = "*", originStation = "*", trainNumber = "*") {
 
-                const stationFilter = arrivalStation === "*"
-                    ? `true`
-                    : `station_id = ${arrivalStation}`
-                const originFilter = originStation === "*"
-                    ? `true`
-                    : `origin_id = ${originStation}`
-                const trainFilter = trainNumber === "*"
-                    ? `true`
-                    : `train_number = ${trainNumber}`
+                console.log({ arrivalStation, originStation, trainNumber })
 
-                const filters = [stationFilter, originFilter, trainFilter].join(" AND ")
-
-                const queries = {
-                    plus15: `SELECT count(*) FROM arrival WHERE (actual_time - scheduled_time) > 15 AND ${filters}`,
-                    plus60: `SELECT count(*) FROM arrival WHERE (actual_time - scheduled_time) > 60 AND ${filters}`,
-                    total: `SELECT count(*) AS total FROM arrival WHERE ${filters}`,
-                    dateRange: `SELECT max(date), min(date) FROM arrival WHERE ${filters}`
-                }
-
-                const results = {}
-
-                for (const query in queries) {
-                    const [{ values }] = db.exec(queries[query])
-                    const [result] = values
-                    results[query] = result
-                }
-
-                const { plus15, plus60, total, dateRange } = results
+                const results = arrivals
+                    .filter(({ stationId }) => arrivalStation === "*" || stationId === arrivalStation)
+                    .filter(({ originId }) => originStation === "*" || originId === originStation)
+                    .map(({ expected, actual }) => actual - expected)
+                    .reduce(
+                        (acc, cur) => {
+                            if (cur > 15) acc.plus15++
+                            if (cur > 60) acc.plus60++
+                            acc.total++
+                            return acc
+                        },
+                        { plus15: 0, plus60: 0, total: 0 })
+                    // TODO - filter train number
+                    
+                const { plus15, plus60, total } = results
 
                 const message = `
-                    Since ${dateRange[0]}<br>
                     trains arrived <strong>15 minutes late</strong> ${plus15} times;<br>
                     trains arrived <strong>more than 1 hour late</strong> ${plus60} times;<br>
                     (out of ${total} total trains)

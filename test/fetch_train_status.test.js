@@ -1,34 +1,25 @@
 import { promisify } from 'util';
 import { exec } from 'child_process';
-import { rm } from 'fs/promises';
-import Database from 'better-sqlite3'
+import { readFile } from 'fs/promises';
 import assert from 'assert';
-import { fetchTrainData } from '../util/fetch_train_status.js';
 
-const DB_NAME = "test.db"
+const csvPath = "test.csv"
 
 /* Create a fresh database */
 
-await rm(DB_NAME)
-    .catch(e => {
-        if (e?.code !== 'ENOENT') throw e
-    })
-
 const execPromise = promisify(exec)
 
-await execPromise(`npm run init-db ${DB_NAME}`)
+await execPromise(`npm run init-db ${csvPath}`)
 
 /* Fetch data for single train */
 
-const db = new Database(DB_NAME)
-
-await fetchTrainData(db)
+await execPromise(`npm run fetch-train-status --silent >> ${csvPath}`)
 
 /* Check that database contains the new data */
 
-const rows = db.prepare("SELECT * FROM arrival").all()
-db.close()
+const arrivals = await readFile(csvPath)
+    .then(buffer => buffer.toString())
+    .then(text => text.split("\n").slice(1))
 
-// const [{ count }] = results
-console.log(rows)
-assert(rows.length > 1, 'There should be more than 1 row in the "arrivals" table')
+console.log(arrivals)
+assert(arrivals.length > 1, `${csvPath} should have more than 1 row`)

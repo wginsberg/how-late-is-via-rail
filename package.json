@@ -11,14 +11,13 @@
     "init-db": "node scripts/init_db.js",
     "fetch-train-numbers": "node scripts/fetch_train_numbers.js",
     "fetch-train-status": "node scripts/fetch_train_status.js",
-    "scrape": "npm run fetch-train-status `cat trains.txt`",
+    "scrape": "npm run fetch-train-status `cat trains.txt` --silent >> data.csv",
     "test": "find . -name \\*.test.js -exec node {} \\;"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "better-sqlite3": "^7.6.2",
     "node-html-parser": "^5.4.2-0"
   },
   "devDependencies": {

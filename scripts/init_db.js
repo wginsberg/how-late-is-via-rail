@@ -1,32 +1,10 @@
-import Database from 'better-sqlite3'
+import { writeFile } from 'fs/promises'
 
-const DEFAULT_DB = 'mora.db'
+const DEFAULT_PATH = 'data.csv'
 
-const dbName = process.argv[2] || DEFAULT_DB
-const db = new Database(dbName)
+const path = process.argv[2] || DEFAULT_PATH
 
-// Create tables
-
-db.exec(`
-    CREATE TABLE station (
-        station_id INTEGER PRIMARY KEY,
-        station_name TEXT NOT NULL UNIQUE
-    )
-`)
-
-db.exec(`
-    CREATE TABLE arrival (
-        arrival_id INTEGER PRIMARY KEY,
-        train_number INTEGER NOT NULL,
-        station_id INTEGER NOT NULL,
-        origin_id INTEGER NOT NULL,
-        date TEXT NOT NULL,
-        scheduled_time INTEGER NOT NULL,
-        actual_time INTEGER NOT NULL,
-        FOREIGN KEY (station_id) REFERENCES station (station_id),
-        FOREIGN KEY (origin_id) REFERENCES station (station_id),
-        UNIQUE (train_number, station_id, date)
-    )
-`)
-
-console.log(dbName)
+const columns = ["train_number", "station", "origin", "date", "scheduled_time", "actual_time"]
+const header = columns.join(",")
+await writeFile(path, header + '\n')
+console.log(path)
