@@ -199,8 +199,12 @@
                 console.info({ arrivalStation, originStation, trainNumber })
 
                 const results = arrivals
-                    .filter(({ stationId }) => arrivalStation === "*" || stationId === arrivalStation)
-                    .filter(({ originId }) => originStation === "*" || originId === originStation)
+                    .filter(arrival => {
+                        if (arrivalStation !== "*" && arrival.stationId !== arrivalStation) return false
+                        if (originStation !== "*" && arrival.originId !== originStation) return false
+                        if (trainNumber !== "*" && arrival.trainNumber !== trainNumber) return false
+                        return true
+                    })
                     .map(({ expected, actual }) => actual - expected)
                     .reduce(
                         (acc, cur) => {
@@ -210,7 +214,6 @@
                             return acc
                         },
                         { plus15: 0, plus60: 0, total: 0 })
-                    // TODO - filter train number
                     
                 const { plus15, plus60, total } = results
 
