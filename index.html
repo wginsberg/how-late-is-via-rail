@@ -54,10 +54,13 @@
             const origins = {}
             const trainNumbers = new Set()
             const arrivals = []
+            const originsForStation = {}
+            const trainsForStation = {}
             for (const row of rows) {
                 if (!row) continue
                 const [trainNumber, stationName, originName, date, expected, actual] = row.split(",")
 
+                // Assign unique id to station
                 if (!stations[stationName]) {
                     const nextId = `${Object.keys(stations).length + 1}`
                     stations[stationName] = nextId
@@ -65,6 +68,7 @@
 
                 const stationId = stations[stationName]
 
+                // Assign unique id to origin stations
                 if (!origins[originName]) {
                     const nextId = `${Object.keys(origins).length + 1}`
                     origins[originName] = nextId
@@ -82,6 +86,15 @@
                 }
                 arrivals.push(arrival)
                 trainNumbers.add(Number(trainNumber))
+
+                // Track the origins for this station
+                if (!originsForStation[stationId]) originsForStation[stationId] = new Set()
+                originsForStation[stationId].add(originId)
+
+                // Track the trains for this station
+                if (!trainsForStation[stationId]) trainsForStation[stationId] = {}
+                if (!trainsForStation[stationId][originId]) trainsForStation[stationId][originId] = new Set()
+                trainsForStation[stationId][originId].add(trainNumber)
             }
 
             /* Add options to arrival input */
@@ -128,70 +141,62 @@
                 const trainNumber = document.getElementById("trainNumber").value
 
                 displayStats(arrivalStation, originStation, trainNumber)
-                // updateOptions(arrivalStation, originStation, trainNumber)
             }
 
-            // function updateOptions (arrivalStation, originStation, trainNumber) {
-            //     if (arrivalStation === "*") {
-            //         // enable all options
-            //         const originSelect = document.getElementById("originStation")
-            //         originSelect.childNodes.forEach((option) => {
-            //             option.disabled = false
-            //         })
-            //         const trainSelect = document.getElementById("trainNumber")
-            //         trainSelect.childNodes.forEach((option) => {
-            //             option.disabled = false
-            //         })
-            //         return
-            //     }
+            function handleArrivalChange (arrivalStation) {
+                // Filter origin options
+                const originSets = arrivalStation === "*"
+                    ? Object.values(originsForStation)
+                    : [originsForStation[arrivalStation]]
+                const validOrigins = originSets.reduce((acc, cur) => new Set([...acc, ...cur]), [])
+                const originSelect = document.getElementById("originStation")
+                originSelect.childNodes.forEach((option) => {
+                    const isValid = option.value === "*" || validOrigins.has(option.value)
+                    option.hidden = !isValid
+                })
+                // Clear previously selected origin option
+                originSelect.value = "*"
 
-            //     // Restrict origin station options for this arrival station
-            //     const originResults = db.exec(`
-            //         SELECT DISTINCT origin_id
-            //         FROM arrival
-            //         WHERE station_id = ${arrivalStation}
-            //     `)
-            //     const origins = originResults[0].values.map(([value]) => value)
-            //     const originOptions = new Set(["*", ...origins])
+                // Filter train options
+                if (arrivalStation === "*") {
+                    // Show all train numbers
+                    trainNumberSelect.childNodes.forEach((option) => {
+                        option.hidden = false
+                    })
+                } else {
+                    // Show only train numbers for this station
+                    const trainSets = Object.values(trainsForStation[arrivalStation])
+                    const validTrains = trainSets.reduce((acc, cur) => new Set([...acc, ...cur]), [])
+                    trainNumberSelect.childNodes.forEach((option) => {
+                        const isValid = option.value === "*" || validTrains.has(option.value)
+                        option.hidden = !isValid
+                    })
+                }
+                // Clear previously selected train number option
+                trainNumberSelect.value = "*"
+            }
 
-            //     const originSelect = document.getElementById("originStation")
-            //     originSelect.childNodes.forEach((option) => {
-            //         option.disabled = !originOptions.has(Number(option.value))
-            //     })
+            function handleOriginChange (originStation) {
+                // Filter trains
+                const arrivalStation = document.getElementById("arrivalStation").value
 
-            //     // Reset origin if current option is now disabled
-            //     if (originSelect.selectedOptions[0].disabled) {
-            //         originSelect.value = "*"
-            //     }
-                
-            //     // Restrict train number options for this arrival and origin station
-            //     const originFilter = originStation === "*"
-            //         ? `true`
-            //         : `origin_id = ${originStation}`
+                const trainSets = originStation === "*"
+                    ? Object.values(trainsForStation[arrivalStation])
+                    : [trainsForStation[arrivalStation][originStation]]
+                const validTrains = trainSets.reduce((acc, cur) => new Set([...acc, ...cur]), [])
 
-            //     const trainNumberResults = db.exec(`
-            //         SELECT DISTINCT train_number
-            //         FROM arrival
-            //         WHERE station_id = ${arrivalStation}
-            //             AND ${originFilter}
-            //     `)
-
-            //     const trainNumbers = trainNumberResults[0].values.map(([value]) => value)
-            //     const trainNumberOptions = new Set(["*", ...trainNumbers])
-
-            //     const trainNumberSelect = document.getElementById("trainNumber")
-            //     trainNumberSelect.childNodes.forEach((option) => {
-            //         option.disabled = !trainNumberOptions.has(Number(option.value))
-            //     })
-            //     // Reset train number if current option is now disabled
-            //     if (trainNumberSelect.selectedOptions[0].disabled) {
-            //         trainNumberSelect.value = "*"
-            //     }
-            // }
+                const trainNumberSelect = document.getElementById("trainNumber")
+                trainNumberSelect.childNodes.forEach((option) => {
+                    const isValid = option.value === "*" || validTrains.has(option.value)
+                    option.hidden = !isValid
+                })
+                // Clear selected option if it is no longer valid
+                if (!validTrains.has(trainNumberSelect)) trainNumberSelect.value = "*"
+            }
 
             function displayStats (arrivalStation = "*", originStation = "*", trainNumber = "*") {
 
-                console.log({ arrivalStation, originStation, trainNumber })
+                console.info({ arrivalStation, originStation, trainNumber })
 
                 const results = arrivals
                     .filter(({ stationId }) => arrivalStation === "*" || stationId === arrivalStation)
@@ -221,6 +226,9 @@
             }
 
             document.getElementById("criteria").addEventListener('change', e => handleInputChange())
+
+            document.getElementById("arrivalStation").addEventListener('change', e => handleArrivalChange(e.target.value))
+            document.getElementById("originStation").addEventListener('change', e => handleOriginChange(e.target.value))
 
             /* Add initial data to page */
 
