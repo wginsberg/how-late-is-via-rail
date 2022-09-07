@@ -40,6 +40,10 @@
                 <select id="trainNumber"></select>
             </label>
         </form>
+        <canvas id="lateness" width="400" height="400"></canvas>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+
         <script type="module">
             /* Load data */
 
@@ -205,31 +209,76 @@
                         if (trainNumber !== "*" && arrival.trainNumber !== trainNumber) return false
                         return true
                     })
-                    .map(({ expected, actual }) => actual - expected)
-                    .reduce(
-                        (acc, cur) => {
-                            if (cur > 15) acc.plus15++
-                            if (cur > 60) acc.plus60++
-                            acc.total++
-                            return acc
+                    .map(({ date, expected, actual }) => ({
+                        x: date,
+                        y: actual - expected
+                    }))
+
+                    const dates = results
+                        .map(({ x }) => x)
+                        .reduce((acc, cur) => [...new Set([...acc, cur])], [])
+                        .sort()
+
+                const [arrivalStationName] = Object.entries(stations)
+                    .find(([name, id]) => id === arrivalStation)
+                    || []
+                const [originStationName] = Object.entries(origins)
+                    .find(([name, id]) => id === originStation)
+                    || []
+
+                const label = trainNumber !== "*"
+                    ? `Train ${trainNumber}`
+                    : arrivalStation !== "*"
+                        ? originStation !== "*"
+                            ? `Trains arriving at ${arrivalStationName} from ${originStationName}`
+                            : `Trains arriving at ${arrivalStationName}`
+                        : originStation !== "*"
+                            ? `Trains arriving from ${originStationName}`
+                            : "All Trains on the Quebec City - Windsor Corridor"
+
+                /* Initialize chart */
+                var ctx = document.getElementById('lateness').getContext('2d');
+                var chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label,
+                            backgroundColor: 'rgb(255, 99, 132)',
+                            borderColor: 'rgb(255, 99, 132)',
+                            data: results
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                type: "time",
+                                time: {
+                                    tooltipFormat: "DD T"
+                                },
+                                title: {
+                                    display: true,
+                                    text: "Date"
+                                }
+                            }
                         },
-                        { plus15: 0, plus60: 0, total: 0 })
-                    
-                const { plus15, plus60, total } = results
-
-                const message = `
-                    trains arrived <strong>15 minutes late</strong> ${plus15} times;<br>
-                    trains arrived <strong>more than 1 hour late</strong> ${plus60} times;<br>
-                    (out of ${total} total trains)
-                `
-
-                const el = document.createElement("div")
-                el.innerHTML = message
-                document.body.appendChild(el)
+                        tooltips: {
+                            callbacks: {
+                                label: ({ value }) => {
+                                    value = Number(value)
+                                    if (value < -1) return `${Math.abs(value)} minutes early`
+                                    if (value === -1) return "1 minute early"
+                                    if (value === 0) return "On time"
+                                    if (value === 1) return `1 minute late`
+                                    if (value > 1) return `${value} minutes late`
+                                }
+                            }
+                        }
+                    },
+                });
             }
 
             document.getElementById("criteria").addEventListener('change', e => handleInputChange())
-
             document.getElementById("arrivalStation").addEventListener('change', e => handleArrivalChange(e.target.value))
             document.getElementById("originStation").addEventListener('change', e => handleOriginChange(e.target.value))
 
