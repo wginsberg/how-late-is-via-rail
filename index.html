@@ -237,8 +237,9 @@
                             : "All Trains on the Quebec City - Windsor Corridor"
 
                 /* Initialize chart */
-                var ctx = document.getElementById('lateness').getContext('2d');
-                var chart = new Chart(ctx, {
+                if (window.chart) window.chart.destroy()
+                window.ctx = document.getElementById('lateness').getContext('2d');
+                window.chart = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: dates,
