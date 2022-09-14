@@ -240,10 +240,11 @@
                 if (window.chart) window.chart.destroy()
                 window.ctx = document.getElementById('lateness').getContext('2d');
                 window.chart = new Chart(ctx, {
-                    type: 'bar',
+                    type: 'line',
                     data: {
                         labels: dates,
                         datasets: [{
+                            showLine: false,
                             label,
                             backgroundColor: 'rgb(255, 99, 132)',
                             borderColor: 'rgb(255, 99, 132)',
