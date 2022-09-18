@@ -24,5 +24,29 @@ export function parseStatusPage(text = '') {
             if(!!actualArrival) return true     // filter out missing data
         })
 
+    // Normalize times for arrivals after midnight
+    for (let i = 1; i < results.length; i++) {
+        // Handle expected arrival time
+        {
+            let [currentHour, currentMinute] = results[i].expectedArrival?.split(":").map(Number) || []
+            const [lastHour] = results[i-1].expectedArrival?.split(":").map(Number) || []
+            if (currentHour < lastHour) {
+                currentHour += 24
+                const newTime = `${currentHour}:${currentMinute}`
+                results[i].expectedArrival = newTime
+            }
+        }
+        // Handle actual arrival time
+        {
+            let [currentHour, currentMinute] = results[i].actualArrival?.split(":").map(Number) || []
+            const [lastHour] = results[i-1].actualArrival?.split(":").map(Number) || []
+            if (currentHour < lastHour) {
+                currentHour += 24
+                const newTime = `${currentHour}:${currentMinute}`
+                results[i].actualArrival = newTime
+            }
+        }
+    }
+
     return results
 }

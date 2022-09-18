@@ -35,3 +35,27 @@ import { parseStatusPage } from "./parse.js";
 
     deepStrictEqual(actual, expected)
 }
+
+{
+    /* Handles arrival times after midnight */
+
+    // https://reservia.viarail.ca/tsi/GetTrainStatus.aspx?l=en&TsiCCode=VIA&TsiTrainNumber=79&ArrivalDate=2022-09-10
+    const dirname = path.dirname(fileURLToPath(import.meta.url))
+    const html = readFileSync(path.resolve(dirname, './parse_after_midnight.test.html'))
+
+    const actual = parseStatusPage(html)
+    const expected = ([
+        { stationName: 'TORONTO UNION STATION' },
+        { stationName: 'OAKVILLE', expectedArrival: '20:07', actualArrival: '20:16' },
+        { stationName: 'ALDERSHOT', expectedArrival: '20:22', actualArrival: '20:37' },
+        { stationName: 'BRANTFORD', expectedArrival: '20:50', actualArrival: '22:04' },
+        { stationName: 'WOODSTOCK', expectedArrival: '21:17', actualArrival: '22:32' },
+        { stationName: 'INGERSOLL', expectedArrival: '21:30', actualArrival: '22:45' },
+        { stationName: 'LONDON', expectedArrival: '21:52', actualArrival: '23:08' },
+        { stationName: 'GLENCOE', expectedArrival: '22:25', actualArrival: '23:49' },
+        { stationName: 'CHATHAM', expectedArrival: '22:57', actualArrival: '24:34' },
+        { stationName: 'WINDSOR', expectedArrival: '23:44', actualArrival: '25:15' }
+    ])
+
+    deepStrictEqual(actual, expected)
+}
