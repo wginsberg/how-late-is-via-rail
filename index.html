@@ -105,7 +105,7 @@
 
             const stationOptions = [
                 ["*", "any"], 
-                ...Object.entries(stations).map(([name, id]) => ([id, name]))
+                ...Object.entries(stations).sort().map(([name, id]) => ([id, name]))
             ]
 
             const arrivalSelect = document.getElementById("arrivalStation")
@@ -117,7 +117,7 @@
 
             const originOptions = [
                 ["*", "any"],
-                ...Object.entries(origins).map(([name, id]) => ([id, name]))
+                ...Object.entries(origins).sort().map(([name, id]) => ([id, name]))
             ]
 
             const originSelect = document.getElementById("originStation")
