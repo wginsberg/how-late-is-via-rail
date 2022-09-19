@@ -59,3 +59,45 @@ import { parseStatusPage } from "./parse.js";
 
     deepStrictEqual(actual, expected)
 }
+
+{
+    /* Handles entries that appear out of order */
+
+    // https://reservia.viarail.ca/tsi/GetTrainStatus.aspx?l=en&TsiCCode=VIA&TsiTrainNumber=15&ArrivalDate=2022-09-10
+    const dirname = path.dirname(fileURLToPath(import.meta.url))
+    const html = readFileSync(path.resolve(dirname, './parse_out_of_order.test.html'))
+
+    const actual = parseStatusPage(html)
+    const expected = ([
+        { stationName: 'HALIFAX' },
+        { stationName: 'TRURO', expectedArrival: '14:26', actualArrival: '15:23' },
+        { stationName: 'SPRINGHILL JCT', expectedArrival: '15:42', actualArrival: '16:37' },
+        { stationName: 'AMHERST', expectedArrival: '16:05', actualArrival: '16:58' },
+        { stationName: 'SACKVILLE', expectedArrival: '16:22', actualArrival: '17:15' },
+        { stationName: 'MONCTON', expectedArrival: '17:17', actualArrival: '18:00' },
+        { stationName: 'ROGERSVILLE', expectedArrival: '18:41', actualArrival: '19:46' },
+        { stationName: 'MIRAMICHI', expectedArrival: '19:32', actualArrival: '20:33' },
+        { stationName: 'BATHURST', expectedArrival: '21:18', actualArrival: '22:06' },
+        { stationName: 'PETIT ROCHER', expectedArrival: '21:47', actualArrival: '22:28' },
+        { stationName: 'JACQUET RIVER', expectedArrival: '22:10', actualArrival: '22:51' },
+        { stationName: 'CHARLO', expectedArrival: '22:34', actualArrival: '23:29' },
+        { stationName: 'CAMPBELLTON', expectedArrival: '23:08', actualArrival: '24:16' },
+        { stationName: 'MATAPEDIA', expectedArrival: '22:50', actualArrival: '23:58' },
+        { stationName: 'CAUSAPSCAL', expectedArrival: '23:39', actualArrival: '24:48' },
+        { stationName: 'AMQUI', expectedArrival: '23:59', actualArrival: '25:08' },
+        { stationName: 'SAYABEC', expectedArrival: '00:21', actualArrival: '01:49' },
+        { stationName: 'MONT-JOLI', expectedArrival: '01:21', actualArrival: '02:56' },
+        { stationName: 'RIMOUSKI', expectedArrival: '01:54', actualArrival: '03:31' },
+        { stationName: 'TROIS PISTOLES', expectedArrival: '03:01', actualArrival: '05:01' },
+        { stationName: 'RIVIÈRE-DU-LOUP', expectedArrival: '03:38', actualArrival: '06:02' },
+        { stationName: 'LA POCATIERE', expectedArrival: '04:35', actualArrival: '06:46' },
+        { stationName: 'MONTMAGNY', expectedArrival: '05:10', actualArrival: '07:46' },
+        { stationName: 'SAINTE-FOY', expectedArrival: '06:13', actualArrival: '09:03' },
+        { stationName: 'DRUMMONDVILLE', expectedArrival: '08:30', actualArrival: '11:22' },
+        { stationName: 'SAINT-HYACINTHE', expectedArrival: '09:10', actualArrival: '11:50' },
+        { stationName: 'SAINT-LAMBERT', expectedArrival: '09:44', actualArrival: '12:18' },
+        { stationName: 'MONTRÉAL', expectedArrival: '10:03', actualArrival: '12:34' }
+    ])
+
+    deepStrictEqual(actual, expected)
+}

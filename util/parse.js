@@ -1,4 +1,5 @@
 import { parse } from "node-html-parser"
+import { parseTime } from './datetime.js'
 
 export function parseStatusPage(text = '') {
     const parsed = parse(text)
@@ -25,26 +26,18 @@ export function parseStatusPage(text = '') {
         })
 
     // Normalize times for arrivals after midnight
-    for (let i = 1; i < results.length; i++) {
-        // Handle expected arrival time
-        {
-            let [currentHour, currentMinute] = results[i].expectedArrival?.split(":").map(Number) || []
-            const [lastHour] = results[i-1].expectedArrival?.split(":").map(Number) || []
-            if (currentHour < lastHour) {
-                currentHour += 24
-                const newTime = `${currentHour}:${currentMinute}`
-                results[i].expectedArrival = newTime
-            }
-        }
-        // Handle actual arrival time
-        {
-            let [currentHour, currentMinute] = results[i].actualArrival?.split(":").map(Number) || []
-            const [lastHour] = results[i-1].actualArrival?.split(":").map(Number) || []
-            if (currentHour < lastHour) {
-                currentHour += 24
-                const newTime = `${currentHour}:${currentMinute}`
-                results[i].actualArrival = newTime
-            }
+    for (let i = 0; i < results.length; i++) {
+        const [expectedHour] = results[i].expectedArrival?.split(":").map(Number) || []
+        const [actualHour, actualMinute] = results[i].actualArrival?.split(":").map(Number) || []
+
+        // If the train arrives more than 12 hours early, assume it is the next day
+        if (expectedHour - actualHour > 12) {
+            const newHour = actualHour + 24
+            const newTime = [newHour, actualMinute]
+                .map(String)
+                .map(s => s.padStart(2, "0"))
+                .join(":")
+            results[i].actualArrival = newTime
         }
     }
 
