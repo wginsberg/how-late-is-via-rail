@@ -1,14 +1,18 @@
 import { parse } from "node-html-parser"
-import { parseTime } from './datetime.js'
 
 export function parseStatusPage(text = '') {
     const parsed = parse(text)
     const rows = parsed.querySelectorAll("#tsicontent > *")
     const re = /(.+?)(\d\d\d\d-\d\d-\d\d)?(Arr:)?(Dep:)?(\d\d:\d\d)(\d\d:\d\d)(\d\d:\d\d)?(\d\d:\d\d)?/
+
+    let departureDate
     const results = rows
         .map(row => {
             const result = re.exec(row.removeWhitespace().innerText)?.slice(1) || []
-            const [stationName, _date, didArrive, didDepart, ...times] = result
+            const [stationName, date, didArrive, didDepart, ...times] = result
+
+            // Keep track of first date seen as the departure date
+            if (!departureDate) departureDate = date
 
             // Origin station has no arrival
             if (!didArrive) return { stationName }
@@ -41,5 +45,10 @@ export function parseStatusPage(text = '') {
         }
     }
 
-    return results
+    const result = {
+        date: departureDate,
+        rows: results
+    }
+
+    return result
 }

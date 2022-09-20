@@ -14,17 +14,23 @@ export async function fetchTrainData(trainNumber, arrivalDate) {
             return res.text()
          })
 
-    const rows = parseStatusPage(statusPage)
-         .map(({ expectedArrival, actualArrival, ...station }) => ({
-            expectedArrival: parseTime(expectedArrival),
-            actualArrival: parseTime(actualArrival),
-            ...station
-        }))
+    const parsed = parseStatusPage(statusPage)
+    const date = parsed.date
+    const rows = parsed.rows.map(({ expectedArrival, actualArrival, ...station }) => ({
+        expectedArrival: parseTime(expectedArrival),
+        actualArrival: parseTime(actualArrival),
+        ...station
+    }))
 
     const [origin, ...stations] = rows
 
     if (!origin || stations.length === 0) {
-        console.warn("No arrivals\n")
+        console.warn("No arrival data\n")
+        return []
+    }
+
+    if (date !== arrivalDate) {
+        console.warn(`Data returned for ${date} instead of ${arrivalDate}; ignoring\n`)
         return []
     }
 
