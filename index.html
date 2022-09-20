@@ -236,6 +236,21 @@
                             ? `Trains arriving from ${originStationName}`
                             : "All Trains on the Quebec City - Windsor Corridor"
 
+                const tooltips = trainNumber === "*" || arrivalStation === "*"
+                    ? false
+                    : {
+                        callbacks: {
+                                label: ({ value }) => {
+                                    value = Number(value)
+                                    if (value < -1) return `${Math.abs(value)} minutes early`
+                                    if (value === -1) return "1 minute early"
+                                    if (value === 0) return "On time"
+                                    if (value === 1) return `1 minute late`
+                                    if (value > 1) return `${value} minutes late`
+                                }
+                            }
+                    }
+
                 /* Initialize chart */
                 if (window.chart) window.chart.destroy()
                 window.ctx = document.getElementById('lateness').getContext('2d');
@@ -252,30 +267,16 @@
                         }]
                     },
                     options: {
+                        animation: false,
                         scales: {
-                            x: {
-                                type: "time",
-                                time: {
-                                    tooltipFormat: "DD T"
-                                },
-                                title: {
+                            yAxes: [{
+                                scaleLabel: {
                                     display: true,
-                                    text: "Date"
+                                    labelString: "Minutes late"
                                 }
-                            }
+                            }]
                         },
-                        tooltips: {
-                            callbacks: {
-                                label: ({ value }) => {
-                                    value = Number(value)
-                                    if (value < -1) return `${Math.abs(value)} minutes early`
-                                    if (value === -1) return "1 minute early"
-                                    if (value === 0) return "On time"
-                                    if (value === 1) return `1 minute late`
-                                    if (value > 1) return `${value} minutes late`
-                                }
-                            }
-                        }
+                        tooltips
                     },
                 });
             }
