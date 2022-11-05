@@ -17,8 +17,9 @@ export async function fetchTrainData(trainNumber, arrivalDate) {
     const parsed = parseStatusPage(statusPage)
     const date = parsed.date
     const rows = parsed.rows.map(({ expectedArrival, actualArrival, ...station }) => ({
-        expectedArrival: parseTime(expectedArrival),
-        actualArrival: parseTime(actualArrival),
+        expectedArrival,
+        actualArrival,
+        minutesLate: parseTime(actualArrival) - parseTime(expectedArrival),
         ...station
     }))
 

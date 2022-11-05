@@ -13,8 +13,8 @@ for (const trainNumber of trains) {
     const results = await fetchTrainData(trainNumber, date)
     const [origin, ...arrivals] = results
     for (const arrival of arrivals) {
-        const { stationName, expectedArrival, actualArrival } = arrival
-        const columns = [trainNumber, stationName, origin.stationName, date, expectedArrival, actualArrival]
+        const { stationName, expectedArrival, actualArrival, minutesLate } = arrival
+        const columns = [trainNumber, stationName, origin.stationName, date, expectedArrival, actualArrival, minutesLate]
         console.log(columns.join(","))
     }
 }

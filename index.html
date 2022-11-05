@@ -66,7 +66,7 @@
             const trainsForStation = {}
             for (const row of rows) {
                 if (!row) continue
-                const [trainNumber, stationName, originName, date, expected, actual] = row.split(",")
+                const [trainNumber, stationName, originName, date, expected, actual, delta] = row.split(",")
 
                 // Assign unique id to station
                 if (!stations[stationName]) {
@@ -89,8 +89,7 @@
                     stationId,
                     originId,
                     date,
-                    expected: Number(expected),
-                    actual: Number(actual)
+                    delta
                 }
                 arrivals.push(arrival)
                 trainNumbers.add(Number(trainNumber))
@@ -213,9 +212,9 @@
                         if (trainNumber !== "*" && arrival.trainNumber !== trainNumber) return false
                         return true
                     })
-                    .map(({ date, expected, actual }) => ({
+                    .map(({ date, delta }) => ({
                         x: date,
-                        y: actual - expected
+                        y: delta
                     }))
 
                     const dates = results
