@@ -13,7 +13,7 @@
             }
             body {
                 margin: auto;
-                max-width: 320px;
+                max-width: 640px;
                 max-height: 720px;  
                 padding: 8px;
             }
@@ -264,8 +264,18 @@
                         datasets: [{
                             showLine: false,
                             label,
-                            backgroundColor: 'rgb(255, 99, 132)',
-                            borderColor: 'rgb(255, 99, 132)',
+                            pointBackgroundColor: function(context) {
+                                var index = context.dataIndex;
+                                var value = context.dataset.data[index].y;
+                                const color = value < 5
+                                    ? 'green'
+                                    : value < 15
+                                        ? 'yellow'
+                                        : value < 30
+                                            ? 'orange'
+                                            : 'red'
+                                return color
+                            },
                             data: results
                         }]
                     },
