@@ -38,6 +38,11 @@ function App() {
     fetchData()
   }, [])
 
+  useEffect(() => {
+    setOriginStationInputValue("")
+    setTrainNumberInputValue("")
+  }, [arrivalStationInputValue])
+
   const destinations = records.reduce((acc, next) => {
     const origin = next[2]
     const station = next[1]
@@ -63,12 +68,6 @@ function App() {
     return 1
   })
 
-  const trainNumbers = [...records.reduce((acc, next) => {
-    const trainNumber = next[0]
-    acc.add(trainNumber)
-    return acc
-  }, new Set())].sort()
-
   const results = records
     .filter(record => {
       const trainNumber = record[0]
@@ -84,6 +83,29 @@ function App() {
     .toReversed()
     .slice(0, 100)
     
+  const originStationOptionsSet = new Set()
+  for (const originStation in destinations) {
+    if (!arrivalStationInputValue) {
+      originStationOptionsSet.add(originStation)
+      continue
+    } else if (destinations[originStation].has(arrivalStationInputValue)) {
+      originStationOptionsSet.add(originStation)
+    }
+  }
+  const originStationOptions = [...originStationOptionsSet].sort()
+
+  const trainNumberOptionsSet = new Set()
+  for (const record of records) {
+    const trainNumber = record[0]
+    const station = record[1]
+    const origin = record[2]
+    
+    if (arrivalStationInputValue && station !== arrivalStationInputValue) continue
+    if (originStationInputValue && origin !== originStationInputValue) continue
+
+    trainNumberOptionsSet.add(trainNumber)
+  }
+  const trainNumberOptions = [...trainNumberOptionsSet].sort()
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -100,7 +122,8 @@ function App() {
             </Grid>
             <Grid item xs={12} sm={4}>
               <Autocomplete
-                options={Object.keys(destinations)}
+                options={originStationOptions}
+                value={originStationInputValue}
                 inputValue={originStationInputValue}
                 onInputChange={(e, value) => setOriginStationInputValue(value)}
                 renderInput={(params) => <TextField {...params} label="Origin Station" />}
@@ -108,10 +131,11 @@ function App() {
             </Grid>
             <Grid item xs={12} sm={4}>
               <Autocomplete
+                value={trainNumberInputValue}
                 inputValue={trainNumberInputValue}
-                onInputChange={(e, value) => setTrainNumberInputValue(value)}
+                onInputChange={(e, value, reason) => setTrainNumberInputValue(value)}
                 filterOptions={createFilterOptions({ matchFrom: "start" })}
-                options={trainNumbers}
+                options={trainNumberOptions}
                 renderInput={(params) => <TextField {...params} label="Train Number" />}
               />
             </Grid>
