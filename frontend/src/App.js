@@ -62,11 +62,12 @@ function App() {
     }
   }
   
-  const allStations = [...stationSet].sort((a, b) => {
-    if (a === TORONTO) return -1
-    if (a < b) return -1
-    return 1
-  })
+  const allStations = [
+    TORONTO,
+      ...[...stationSet]
+        .filter(station => station !== TORONTO)
+        .sort()
+    ]
 
   const results = records
     .filter(record => {
