@@ -88,7 +88,7 @@ function App() {
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
-      <Container maxWidth="md">
+      <Container maxWidth="sm">
           <Grid container component="form" spacing={2} paddingTop={2}>
             <Grid item xs={12} sm={4}>
               <Autocomplete
@@ -118,7 +118,7 @@ function App() {
           </Grid>
           <List>
             {results.map((row) => (
-              <ListItem key={row}>
+              <ListItem key={row} sx={{ px: 0}}>
                 <Card
                   trainNumber={row[0]}
                   station={row[1]}

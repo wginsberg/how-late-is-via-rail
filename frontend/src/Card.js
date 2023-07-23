@@ -1,8 +1,10 @@
 import React from "react"
 import { formatDistanceToNow } from 'date-fns';
-import Card from "@mui/material/Card"
-import CardContent from "@mui/material/CardContent"
+import Paper from "@mui/material/Paper"
 import Typography from "@mui/material/Typography"
+import Train from "./Train";
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import Box from "@mui/material/Box"
 
 export default function (props) {
     const { trainNumber, station, origin, minutesLate, date } = props
@@ -20,16 +22,19 @@ export default function (props) {
             : "red"
 
     return (
-        <Card sx={{ borderLeft: `4px solid ${color}`, width: "100%" }}>
-            <CardContent>
+        <Paper sx={{ borderLeft: `4px solid ${color}`, width: "100%", padding: 2 }}>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                 <Typography component="span" noWrap>{origin}</Typography>
-                <span> - </span>
-                <Typography component="span" noWrap><strong>{station}</strong></Typography>
+                <Box sx={{ display: "flex", gap: 1}}>
+                    <ArrowForwardIcon />
+                    <Typography component="span" noWrap><strong>{station}</strong></Typography>
+                </Box>
+            </Box>
+            <Train trainNumber={trainNumber} />
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography>{delayMessage}</Typography>
-                <Typography>Train {trainNumber}</Typography>
                 <Typography>{formatDistanceToNow(new Date(date))} ago</Typography>
-                <Typography>{date}</Typography>
-            </CardContent>
-        </Card>
+            </Box>
+        </Paper>
     )
 }
