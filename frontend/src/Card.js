@@ -27,7 +27,7 @@ export default function (props) {
                 <Typography component="span" noWrap><strong>{station}</strong></Typography>
                 <Typography>{delayMessage}</Typography>
                 <Typography>Train {trainNumber}</Typography>
-                <Typography>{formatDistanceToNow(new Date(date))}</Typography>
+                <Typography>{formatDistanceToNow(new Date(date))} ago</Typography>
                 <Typography>{date}</Typography>
             </CardContent>
         </Card>

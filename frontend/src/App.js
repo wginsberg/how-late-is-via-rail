@@ -28,9 +28,12 @@ function App() {
     async function fetchData () {
       const text = await fetch("data.csv")
         .then(file => file.text())
-      const rows = text.split("\n").map(row => row.split(","))
+      const rows = text
+        .split("\n")
+        .map(row => row.split(","))
+        .slice(1, -1)
 
-      setRecords(rows).slice(1, 100)
+      setRecords(rows)
     }
     fetchData()
   }, [])
@@ -78,6 +81,8 @@ function App() {
 
       return true
     })
+    .toReversed()
+    .slice(0, 100)
     
 
   return (
