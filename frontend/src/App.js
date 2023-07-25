@@ -21,8 +21,11 @@ function App() {
 
   const [records, setRecords] = useState([])
   const [arrivalStationInputValue, setArrivalStationInputValue] = useState("")
+  const [arrivalStation, setArrivalStation] = useState("")
   const [originStationInputValue, setOriginStationInputValue] = useState("")
+  const [originStation, setOriginStation] = useState("")
   const [trainNumberInputValue, setTrainNumberInputValue] = useState("")
+  const [trainNumber, setTrainNumber] = useState("")
 
   useEffect(() => {
     async function fetchData () {
@@ -39,12 +42,7 @@ function App() {
     fetchData()
   }, [])
 
-  useEffect(() => {
-    setOriginStationInputValue("")
-    setTrainNumberInputValue("")
-  }, [arrivalStationInputValue])
-
-  const stats = getStats(records, arrivalStationInputValue, originStationInputValue, trainNumberInputValue)
+  const stats = getStats(records, arrivalStation, originStation, trainNumber)
 
   const filteredRecords = stats.filteredRecords.slice(0, 100)
   let stations = stats.availableStations
@@ -73,7 +71,9 @@ function App() {
             <Grid item xs={12} sm={4}>
               <Autocomplete
                 options={stations}
+                value={arrivalStation}
                 inputValue={arrivalStationInputValue}
+                onChange={(e, value) => setArrivalStation(value)}
                 onInputChange={(e, value) => setArrivalStationInputValue(value)}
                 renderInput={(params) => <TextField {...params} label="Arrival Station" />}
               />
@@ -81,17 +81,19 @@ function App() {
             <Grid item xs={12} sm={4}>
               <Autocomplete
                 options={origins}
-                value={originStationInputValue}
+                value={originStation}
                 inputValue={originStationInputValue}
+                onChange={(e, value) => setOriginStation(value)}
                 onInputChange={(e, value) => setOriginStationInputValue(value)}
                 renderInput={(params) => <TextField {...params} label="Origin Station" />}
               />
             </Grid>
             <Grid item xs={12} sm={4}>
               <Autocomplete
-                value={trainNumberInputValue}
+                value={trainNumber}
                 inputValue={trainNumberInputValue}
-                onInputChange={(e, value, reason) => setTrainNumberInputValue(value)}
+                onChange={(e, value) => setTrainNumber(value)}
+                onInputChange={(e, value) => setTrainNumberInputValue(value)}
                 filterOptions={createFilterOptions({ matchFrom: "start" })}
                 options={trainNumbers}
                 renderInput={(params) => <TextField {...params} label="Train Number" />}
