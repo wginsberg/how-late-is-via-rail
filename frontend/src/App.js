@@ -9,8 +9,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Autocomplete from "@mui/material/Autocomplete"
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField'
-
-const TORONTO = "TORONTO UNION STATION"
+import { getStats } from "./util"
+import { TORONTO } from './constants';
 
 function App() {
   const darkTheme = createTheme({
@@ -32,6 +32,7 @@ function App() {
         .split("\n")
         .map(row => row.split(","))
         .slice(1, -1)
+        .reverse()
 
       setRecords(rows)
     }
@@ -43,70 +44,26 @@ function App() {
     setTrainNumberInputValue("")
   }, [arrivalStationInputValue])
 
-  const destinations = records.reduce((acc, next) => {
-    const origin = next[2]
-    const station = next[1]
-    const destinationSet = acc[origin] || new Set()
-    destinationSet.add(station)
+  const stats = getStats(records, arrivalStationInputValue, originStationInputValue, trainNumberInputValue)
 
-    return {
-      ...acc,
-      [origin]: destinationSet
-    }
-  }, {})
+  const filteredRecords = stats.filteredRecords.slice(0, 100)
+  let stations = stats.availableStations
+  let origins = stats.availableOrigins
+  const trainNumbers = stats.availableTrainNumbers
 
-  const stationSet = new Set()
-  for (const destinationList of Object.values(destinations)) {
-    for (const station of destinationList) {
-      stationSet.add(station)
-    }
-  }
-  
-  const allStations = [
-    TORONTO,
-      ...[...stationSet]
-        .filter(station => station !== TORONTO)
-        .sort()
+  if (stations.includes(TORONTO)) {
+    stations = [
+      TORONTO,
+      ...stations.filter(station => station !== TORONTO)
     ]
-
-  const results = records
-    .filter(record => {
-      const trainNumber = record[0]
-      const station = record[1]
-      const origin = record[2]
-
-      if (arrivalStationInputValue && station !== arrivalStationInputValue) return false
-      if (originStationInputValue && origin !== originStationInputValue) return false
-      if (trainNumberInputValue && trainNumber !== trainNumberInputValue) return false
-
-      return true
-    })
-    .toReversed()
-    .slice(0, 100)
-    
-  const originStationOptionsSet = new Set()
-  for (const originStation in destinations) {
-    if (!arrivalStationInputValue) {
-      originStationOptionsSet.add(originStation)
-      continue
-    } else if (destinations[originStation].has(arrivalStationInputValue)) {
-      originStationOptionsSet.add(originStation)
-    }
   }
-  const originStationOptions = [...originStationOptionsSet].sort()
 
-  const trainNumberOptionsSet = new Set()
-  for (const record of records) {
-    const trainNumber = record[0]
-    const station = record[1]
-    const origin = record[2]
-    
-    if (arrivalStationInputValue && station !== arrivalStationInputValue) continue
-    if (originStationInputValue && origin !== originStationInputValue) continue
-
-    trainNumberOptionsSet.add(trainNumber)
+  if (origins.includes(TORONTO)) {
+    origins = [
+      TORONTO,
+      ...origins.filter(origin => origin !== TORONTO)
+    ]
   }
-  const trainNumberOptions = [...trainNumberOptionsSet].sort()
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -115,7 +72,7 @@ function App() {
           <Grid container component="form" spacing={2} paddingTop={2}>
             <Grid item xs={12} sm={4}>
               <Autocomplete
-                options={allStations}
+                options={stations}
                 inputValue={arrivalStationInputValue}
                 onInputChange={(e, value) => setArrivalStationInputValue(value)}
                 renderInput={(params) => <TextField {...params} label="Arrival Station" />}
@@ -123,7 +80,7 @@ function App() {
             </Grid>
             <Grid item xs={12} sm={4}>
               <Autocomplete
-                options={originStationOptions}
+                options={origins}
                 value={originStationInputValue}
                 inputValue={originStationInputValue}
                 onInputChange={(e, value) => setOriginStationInputValue(value)}
@@ -136,13 +93,13 @@ function App() {
                 inputValue={trainNumberInputValue}
                 onInputChange={(e, value, reason) => setTrainNumberInputValue(value)}
                 filterOptions={createFilterOptions({ matchFrom: "start" })}
-                options={trainNumberOptions}
+                options={trainNumbers}
                 renderInput={(params) => <TextField {...params} label="Train Number" />}
               />
             </Grid>
           </Grid>
           <List>
-            {results.map((row) => (
+            {filteredRecords.map((row) => (
               <ListItem key={row} sx={{ px: 0}}>
                 <Card
                   trainNumber={row[0]}
