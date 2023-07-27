@@ -1,5 +1,5 @@
 import { createFilterOptions } from '@mui/material/Autocomplete';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Card from "./Card"
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -9,7 +9,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Autocomplete from "@mui/material/Autocomplete"
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField'
-import { getStats } from "./util"
+import { getLookup, getStats } from "./util"
 import { TORONTO } from './constants';
 
 function App() {
@@ -52,8 +52,9 @@ function App() {
     setOriginStation(originStation)
     setTrainNumber("")
   }
+  const lookup = useMemo(() => getLookup(records), [records])
 
-  const stats = getStats(records, arrivalStation, originStation, trainNumber)
+  const stats = getStats(lookup, arrivalStation, originStation, trainNumber)
 
   const filteredRecords = stats.filteredRecords.slice(0, 100)
   let stations = stats.availableStations

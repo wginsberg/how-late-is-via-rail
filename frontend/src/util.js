@@ -1,40 +1,59 @@
-export function getStats(records = [], selectedStation, selectedOrigin, selectedTrainNumber) {
-    const filteredRecords = []
-    const stations = new Set()
-    const origins = new Set()
-    const trainNumbers = new Set()
+export function getLookup(records = []) {
+    const lookup = {}
 
     for (const record of records) {
         const [trainNumber, station, origin] = record
 
-        if (selectedStation && station !== selectedStation){
-            stations.add(station)
-            continue
+        if (!lookup[station]) {
+            lookup[station] = {}
         }
-        if (selectedOrigin && origin !== selectedOrigin) {
-            origins.add(origin)
-            continue
+        if (!lookup[station][origin]) {
+            lookup[station][origin] = {}
         }
-        if (selectedTrainNumber && trainNumber !== selectedTrainNumber) {
-            trainNumbers.add(trainNumber)
-            continue
+        if (!lookup[station][origin][trainNumber]) {
+            lookup[station][origin][trainNumber] = []
         }
 
-        stations.add(station)
-        origins.add(origin)
-        trainNumbers.add(trainNumber)
-
-        filteredRecords.push(record)
+        lookup[station][origin][trainNumber].push(record)
     }
 
-    const availableStations = [...stations].sort()
-    const availableOrigins = [...origins].sort()
-    const availableTrainNumbers = [...trainNumbers].sort()
+    return lookup
+}
+
+export function getStats(lookup = {}, selectedStation, selectedOrigin, selectedTrainNumber) {
+
+    const availableStations = Object.keys(lookup)
+    const availableOrigins = new Set()
+    const availableTrainNumbers = new Set()
+    const filteredRecords = []
+
+    // Add origin options
+    for (const station in lookup) {
+        if (selectedStation && station !== selectedStation) continue
+        for (const origin in lookup[station]) {
+            availableOrigins.add(origin)
+        }
+    }
+
+    // Add train numbers and records
+    for (const station in lookup) {
+        if (selectedStation && station !== selectedStation) continue
+        for (const origin in lookup[station]) {
+            if (selectedOrigin && origin !== selectedOrigin) continue
+            for (const trainNumber in lookup[station][origin]) {
+                availableTrainNumbers.add(trainNumber)
+                if (selectedTrainNumber && trainNumber !== `${selectedTrainNumber}`) continue
+                for (const record of lookup[station][origin][trainNumber]) {
+                    filteredRecords.push(record)
+                }
+            }
+        }
+    }
 
     return {
-        filteredRecords,
-        availableStations,
-        availableOrigins,
-        availableTrainNumbers
+        availableStations: availableStations.sort(),
+        availableOrigins: [...availableOrigins].sort(),
+        availableTrainNumbers: [...availableTrainNumbers].sort(),
+        filteredRecords
     }
 }
