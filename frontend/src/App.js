@@ -42,6 +42,17 @@ function App() {
     fetchData()
   }, [])
 
+  const updateArrival = arrivalStation => {
+    setArrivalStation(arrivalStation)
+    setOriginStation("")
+    setTrainNumber("")
+  }
+
+  const updateOrigin = originStation => {
+    setOriginStation(originStation)
+    setTrainNumber("")
+  }
+
   const stats = getStats(records, arrivalStation, originStation, trainNumber)
 
   const filteredRecords = stats.filteredRecords.slice(0, 100)
@@ -73,23 +84,25 @@ function App() {
                 options={stations}
                 value={arrivalStation}
                 inputValue={arrivalStationInputValue}
-                onChange={(e, value) => setArrivalStation(value)}
+                onChange={(e, value) => updateArrival(value)}
                 onInputChange={(e, value) => setArrivalStationInputValue(value)}
                 renderInput={(params) => <TextField {...params} label="Arrival Station" />}
               />
             </Grid>
             <Grid item xs={12} sm={4}>
               <Autocomplete
+                disabled={!arrivalStation}
                 options={origins}
                 value={originStation}
                 inputValue={originStationInputValue}
-                onChange={(e, value) => setOriginStation(value)}
+                onChange={(e, value) => updateOrigin(value)}
                 onInputChange={(e, value) => setOriginStationInputValue(value)}
                 renderInput={(params) => <TextField {...params} label="Origin Station" />}
               />
             </Grid>
             <Grid item xs={12} sm={4}>
               <Autocomplete
+                disabled={!arrivalStation || !originStation}
                 value={trainNumber}
                 inputValue={trainNumberInputValue}
                 onChange={(e, value) => setTrainNumber(value)}
