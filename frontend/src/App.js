@@ -1,6 +1,7 @@
 import { createFilterOptions } from '@mui/material/Autocomplete';
 import React, { useEffect, useState, useMemo } from 'react';
 import Card from "./Card"
+import {useSearchParams } from "./hooks"
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import Container from '@mui/material/Container';
@@ -21,12 +22,13 @@ function App() {
   });
 
   const [records, setRecords] = useState([])
+  const [searchParams, setSearchParams] = useSearchParams()
   const [arrivalStationInputValue, setArrivalStationInputValue] = useState("")
-  const [arrivalStation, setArrivalStation] = useState("")
+  const [arrivalStation, setArrivalStation] = useState(searchParams.station)
   const [originStationInputValue, setOriginStationInputValue] = useState("")
-  const [originStation, setOriginStation] = useState("")
+  const [originStation, setOriginStation] = useState(searchParams.origin)
   const [trainNumberInputValue, setTrainNumberInputValue] = useState("")
-  const [trainNumber, setTrainNumber] = useState("")
+  const [trainNumber, setTrainNumber] = useState(searchParams.trainNumber)
 
   useEffect(() => {
     async function fetchData () {
@@ -47,12 +49,22 @@ function App() {
     setArrivalStation(arrivalStation)
     setOriginStation("")
     setTrainNumber("")
+
+    setSearchParams({station: arrivalStation})
   }
 
   const updateOrigin = originStation => {
     setOriginStation(originStation)
     setTrainNumber("")
+
+    setSearchParams({station: arrivalStation, origin: originStation})
   }
+
+  const updateTrainNumber = trainNumber => {
+    setTrainNumber(trainNumber)
+    setSearchParams({station: arrivalStation, origin: originStation, trainNumber})
+  }
+
   const lookup = useMemo(() => getLookup(records), [records])
 
   const stats = getStats(lookup, arrivalStation, originStation, trainNumber)
@@ -110,7 +122,7 @@ function App() {
                 disabled={disableInputs || !arrivalStation || !originStation}
                 value={trainNumber}
                 inputValue={trainNumberInputValue}
-                onChange={(e, value) => setTrainNumber(value)}
+                onChange={(e, value) => updateTrainNumber(value)}
                 onInputChange={(e, value) => setTrainNumberInputValue(value)}
                 filterOptions={createFilterOptions({ matchFrom: "start" })}
                 options={trainNumbers}
