@@ -76,6 +76,8 @@ function App() {
     ]
   }
 
+  const disableInputs = !records.length
+
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
@@ -83,6 +85,7 @@ function App() {
           <Grid container component="form" spacing={2} paddingTop={2}>
             <Grid item xs={12} sm={4}>
               <Autocomplete
+                disabled={disableInputs}
                 options={stations}
                 value={arrivalStation}
                 inputValue={arrivalStationInputValue}
@@ -93,7 +96,7 @@ function App() {
             </Grid>
             <Grid item xs={12} sm={4}>
               <Autocomplete
-                disabled={!arrivalStation}
+                disabled={disableInputs || !arrivalStation}
                 options={origins}
                 value={originStation}
                 inputValue={originStationInputValue}
@@ -104,7 +107,7 @@ function App() {
             </Grid>
             <Grid item xs={12} sm={4}>
               <Autocomplete
-                disabled={!arrivalStation || !originStation}
+                disabled={disableInputs || !arrivalStation || !originStation}
                 value={trainNumber}
                 inputValue={trainNumberInputValue}
                 onChange={(e, value) => setTrainNumber(value)}
