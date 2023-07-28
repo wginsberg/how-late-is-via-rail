@@ -95,7 +95,7 @@ function App() {
       <CssBaseline />
       <Container maxWidth="sm">
           <Grid container component="form" spacing={2} paddingTop={2}>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12}>
               <Autocomplete
                 disabled={disableInputs}
                 options={stations}
@@ -106,7 +106,7 @@ function App() {
                 renderInput={(params) => <TextField {...params} label="Arrival Station" />}
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={8}>
               <Autocomplete
                 disabled={disableInputs || !arrivalStation}
                 options={origins}
