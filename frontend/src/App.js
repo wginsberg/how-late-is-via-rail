@@ -11,6 +11,7 @@ import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField'
 import { getLookup, getStats } from "./util"
 import { TORONTO } from './constants';
+import { Skeleton } from '@mui/material';
 
 function App() {
   const darkTheme = createTheme({
@@ -115,17 +116,27 @@ function App() {
             </Grid>
           </Grid>
           <List>
-            {filteredRecords.map((row) => (
-              <ListItem key={row} sx={{ px: 0}}>
-                <Card
-                  trainNumber={row[0]}
-                  station={row[1]}
-                  origin={row[2]}
-                  minutesLate={Number(row[6])}
-                  date={row[3]}
-                />
-              </ListItem>
-            ))}
+            {
+              records.length
+                ? filteredRecords.map((row) => (
+                  <ListItem key={row} sx={{ px: 0}}>
+                    <Card
+                      trainNumber={row[0]}
+                      station={row[1]}
+                      origin={row[2]}
+                      minutesLate={Number(row[6])}
+                      date={row[3]}
+                    />
+                  </ListItem>
+                ))
+                : Array.from({ length: 10 }).map((_, i) => (
+                  <ListItem key={i} sx={{ px: 0}}>
+                    <Skeleton variant='rounded' sx={{ width: "100%", maxWidth: "none" }}>
+                        <Card />
+                    </Skeleton>
+                  </ListItem>
+                ))
+            }
           </List>
       </Container>
     </ThemeProvider>

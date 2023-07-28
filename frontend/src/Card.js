@@ -33,7 +33,7 @@ export default function (props) {
             <Train trainNumber={trainNumber} />
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography>{delayMessage}</Typography>
-                <Typography>{formatDistanceToNow(new Date(date))} ago</Typography>
+                <Typography>{date && formatDistanceToNow(new Date(date))} ago</Typography>
             </Box>
         </Paper>
     )
