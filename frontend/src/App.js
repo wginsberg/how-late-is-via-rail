@@ -2,6 +2,7 @@ import { createFilterOptions } from '@mui/material/Autocomplete';
 import React, { useEffect, useState, useMemo } from 'react';
 import Card from "./Card"
 import {useSearchParams } from "./hooks"
+import Summary from "./Summary"
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import Container from '@mui/material/Container';
@@ -130,6 +131,10 @@ function App() {
               />
             </Grid>
           </Grid>
+          <Summary
+            delayMean={stats.delayMean}
+            delayStdDev={stats.delayStdDev}
+          />
           <List>
             {
               records.length

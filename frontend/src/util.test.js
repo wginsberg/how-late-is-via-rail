@@ -200,4 +200,21 @@ describe("getStats", () => {
         expect(actual.availableOrigins).toEqual(expectedOrigins)
         expect(actual.availableTrainNumbers).toEqual(expectedTrainNumbers)
     })
+
+    it("returns mean and standard deviation", () => {
+        const records = [
+            [44, "OSHAWA", "TORONTO UNION STATION", "2023-07-21", "14:53", "15:00", 7],
+            [44, "KINGSTON", "TORONTO UNION STATION", "2023-07-21", "16:34", "16:47", 20],
+            [645, "FALLOWFIELD", "OTTAWA", "2023-06-24", "14:54", "15:01", 7],
+            [52, "KINGSTON", "TORONTO UNION STATION", "2023-06-23", "10:57", "11:10", 10]
+        ]
+
+        const actual = getStats(getLookup(records), "KINGSTON", "TORONTO UNION STATION")
+
+        const expectedMeanDelay = 15
+        const expectedStdDevDelay = 5
+
+        expect(actual.delayMean).toEqual(expectedMeanDelay)
+        expect(actual.delayStdDev).toEqual(expectedStdDevDelay)
+    })
 })

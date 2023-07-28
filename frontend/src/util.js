@@ -1,3 +1,5 @@
+import { mean, standardDeviation} from "simple-statistics"
+
 export function getLookup(records = []) {
     const lookup = {}
 
@@ -50,10 +52,17 @@ export function getStats(lookup = {}, selectedStation, selectedOrigin, selectedT
         }
     }
 
+    const delays = filteredRecords.map(record => Number(record[6]))
+
+    const delayMean = delays.length > 1 ? mean(delays) : delays[0]
+    const delayStdDev = delays.length > 1 ? standardDeviation(delays) : undefined
+
     return {
         availableStations: availableStations.sort(),
         availableOrigins: [...availableOrigins].sort(),
         availableTrainNumbers: [...availableTrainNumbers].sort(),
-        filteredRecords
+        filteredRecords,
+        delayMean,
+        delayStdDev
     }
 }
